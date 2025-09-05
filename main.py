@@ -20,7 +20,7 @@ try:
         oracledb.init_oracle_client(lib_dir=lib_dir)
     else:
         # Rodando como um script .py normal
-        oracledb.init_oracle_client()
+        oracledb.init_oracle_client(lib_dir=r"C:\Users\RJ0373487537\Oracle\instantclient-basic-windows.x64-23.9.0.25.07\instantclient_23_9")
 except oracledb.DatabaseError as e:
      # Adiciona uma mensagem de erro mais clara na inicialização
      messagebox.showerror("Erro Crítico de Banco de Dados", 
@@ -34,9 +34,11 @@ IMAGE_FOLDER_PATH = r".\Fingerprints_Colums"
 
 # --- ALTERAÇÃO: CONFIGURAÇÕES DO BANCO DE DADOS ORACLE ---
 # PREENCHA ESTAS INFORMAÇÕES PARA CONECTAR AO SEU BANCO DE DADOS
-ORACLE_USER = "seu_usuario_aqui"
-ORACLE_PASSWORD = "sua_senha_aqui"
-ORACLE_DSN = "host:porta/service_name"  # Ex: "192.168.1.50:1521/ORCL"
+ORACLE_USER = ""
+ORACLE_PASSWORD = "xxxxxxxxx"
+ORACLE_DSN = ()
+
+
 
 # Nomes das tabelas conforme a nova estrutura
 TABLE_RECORTE = "FRC.RECORTE"
@@ -50,7 +52,19 @@ STATUS_EM_PROCESSAMENTO = 20
 STATUS_CONCLUIDO = 40
 
 try:
-    hostname = socket.gethostname()
+    # Usa ORACLE_USER diretamente para extrair os números
+    numeric_id_str = "".join(filter(str.isdigit, ORACLE_USER))
+    if numeric_id_str:
+        OPERATOR_ID = int(numeric_id_str)
+    else:
+        OPERATOR_ID = 0  # Caso não existam números no ORACLE_USER
+except Exception:
+    OPERATOR_ID = 0  # Valor padrão em caso de erro
+
+
+"""
+try:
+    hostname =ORACLE_USER
     # Extrai todos os dígitos do hostname e converte para um número inteiro.
     # Ex: "rj0310301" se torna 310301
     numeric_id_str = "".join(filter(str.isdigit, hostname))
@@ -60,8 +74,58 @@ try:
         OPERATOR_ID = 0 # Um valor padrão caso o hostname não tenha números
 except:
     OPERATOR_ID = 0 # Um valor padrão em caso de erro
-
+"""
 # --- LÓGICA DE NEGÓCIO E DADOS (ORACLE DB) ---
+
+class LoginScreen(ctk.CTk):
+    def __init__(self):
+        super().__init__()
+        self.title("Login Oracle")
+        self.geometry("400x250")
+        self.resizable(False, False)
+
+        # Armazenar os dados
+        self.user_var = ctk.StringVar()
+        self.pass_var = ctk.StringVar()
+
+        # Widgets
+        ctk.CTkLabel(self, text="Usuário Oracle:").pack(pady=(30, 5))
+        self.user_entry = ctk.CTkEntry(self, textvariable=self.user_var)
+        self.user_entry.pack()
+
+        ctk.CTkLabel(self, text="Senha Oracle:").pack(pady=(15, 5))
+        self.pass_entry = ctk.CTkEntry(self, textvariable=self.pass_var, show="*")
+        self.pass_entry.pack()
+
+        self.connect_button = ctk.CTkButton(self, text="Conectar", command=self.try_connect)
+        self.connect_button.pack(pady=(25, 5))
+
+        self.bind("<Return>", lambda event: self.try_connect())  # Pressionar Enter para conectar
+
+    def try_connect(self):
+        global ORACLE_USER, ORACLE_PASSWORD, ORACLE_DSN
+
+        ORACLE_USER = self.user_var.get()
+        ORACLE_PASSWORD = self.pass_var.get()
+        
+        # Configure seu DSN corretamente aqui
+        ORACLE_DSN = (
+    "(DESCRIPTION=(ADDRESS_LIST= (LOAD_BALANCE=on)"
+    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.225)(PORT=1521))"
+    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.226)(PORT=1521))"
+    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.227)(PORT=1521)))"
+    "(CONNECT_DATA=(SERVICE_NAME= dic)(SERVER = DEDICATED)))"
+) # Ex: "localhost/orclpdb1"
+
+        try:
+            conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=ORACLE_DSN)
+            conn.close()
+            self.destroy()
+            app = App()
+            app.mainloop()
+        except oracledb.DatabaseError as e:
+            error, = e.args
+            messagebox.showerror("Erro de Conexão", f"Não foi possível conectar ao banco de dados:\n{error.message}")
 
 class TaskManager:
     def __init__(self):
@@ -323,6 +387,8 @@ class App(ctk.CTk):
 
     def show_loading_screen(self, batch_size):
         self.show_screen(LoadingScreen, batch_size=batch_size, geometry="500x200", resizable=False)
+
+
 
     def show_evaluation_screen(self, batch_data, processed_image):
         self.show_screen(EvaluationScreen, batch_data=batch_data, processed_image=processed_image, geometry="1200x800", resizable=True)
@@ -643,7 +709,15 @@ class ZoomWindow(ctk.CTkToplevel):
         self.redraw()
 
 if __name__ == "__main__":
+    ctk.set_appearance_mode("dark")  # Opcional
+    ctk.set_default_color_theme("blue")  # Opcional
+
+    login = LoginScreen()
+    login.mainloop()
+"""
+if __name__ == "__main__":
     ctk.set_appearance_mode("System")
     ctk.set_default_color_theme("blue")
     app = App()
     app.mainloop()
+"""
