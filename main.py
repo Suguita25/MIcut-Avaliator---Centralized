@@ -110,7 +110,7 @@ class LoginScreen(ctk.CTk):
 
         # Validação: só números
         if not raw_operator_id.isdigit():
-            messagebox.showerror("Entrada Inválida", "Digite apenas números na matrícula.")
+            messagebox.showerror("Entrada Inválida", "Digite apenas números no RG.")
             return
 
         OPERATOR_ID = int(raw_operator_id)
