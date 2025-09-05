@@ -110,7 +110,7 @@ class LoginScreen(ctk.CTk):
             conn.close()
             self.destroy()
 
-            # ✅ Para debug (remova em produção, se quiser)
+            # Para debug (remova em produção, se quiser)
             print(f"Conectado como {ORACLE_USER}, operador ID: {OPERATOR_ID}")
 
             app = App()
