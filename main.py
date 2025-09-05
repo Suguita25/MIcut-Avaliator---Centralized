@@ -60,20 +60,6 @@ try:
 except Exception:
     OPERATOR_ID = 0  # Valor padrão em caso de erro
 
-
-"""
-try:
-    hostname =ORACLE_USER
-    # Extrai todos os dígitos do hostname e converte para um número inteiro.
-    # Ex: "rj0310301" se torna 310301
-    numeric_id_str = "".join(filter(str.isdigit, hostname))
-    if numeric_id_str:
-        OPERATOR_ID = int(numeric_id_str)
-    else:
-        OPERATOR_ID = 0 # Um valor padrão caso o hostname não tenha números
-except:
-    OPERATOR_ID = 0 # Um valor padrão em caso de erro
-"""
 # --- LÓGICA DE NEGÓCIO E DADOS (ORACLE DB) ---
 
 #--- logica da interface do login---
@@ -116,14 +102,8 @@ class LoginScreen(ctk.CTk):
         OPERATOR_ID = int(raw_operator_id)
         ORACLE_USER = f"rj0{raw_operator_id}"  # Ex: "rj0356789"
 
-        # DSN Oracle
-        ORACLE_DSN = (
-            "(DESCRIPTION=(ADDRESS_LIST=(LOAD_BALANCE=on)"
-            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.225)(PORT=1521))"
-            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.226)(PORT=1521))"
-            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.227)(PORT=1521)))"
-            "(CONNECT_DATA=(SERVICE_NAME=dic)(SERVER=DEDICATED)))"
-        )
+        #  colocar o DSN Oracle
+        ORACLE_DSN = ()
 
         try:
             conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=ORACLE_DSN)
