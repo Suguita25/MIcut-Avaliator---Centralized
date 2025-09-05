@@ -30,14 +30,13 @@ except oracledb.DatabaseError as e:
 # --- CONFIGURAÇÕES GLOBAIS ---
 
 # Mantenha esta variável com o caminho para a pasta de imagens.
-IMAGE_FOLDER_PATH = r".\Fingerprints_Colums"
+IMAGE_FOLDER_PATH = r"\\imagens\Imagens\FRC_RECORTE"
 
 # --- ALTERAÇÃO: CONFIGURAÇÕES DO BANCO DE DADOS ORACLE ---
 # PREENCHA ESTAS INFORMAÇÕES PARA CONECTAR AO SEU BANCO DE DADOS
 ORACLE_USER = ""
 ORACLE_PASSWORD = "xxxxxxxxx"
 ORACLE_DSN = ()
-
 
 
 # Nomes das tabelas conforme a nova estrutura
@@ -77,6 +76,7 @@ except:
 """
 # --- LÓGICA DE NEGÓCIO E DADOS (ORACLE DB) ---
 
+#--- logica da interface do login---
 class LoginScreen(ctk.CTk):
     def __init__(self):
         super().__init__()
@@ -85,15 +85,15 @@ class LoginScreen(ctk.CTk):
         self.resizable(False, False)
 
         # Armazenar os dados
-        self.user_var = ctk.StringVar()
+        self.operator_id_var = ctk.StringVar()
         self.pass_var = ctk.StringVar()
 
         # Widgets
-        ctk.CTkLabel(self, text="Usuário Oracle:").pack(pady=(30, 5))
-        self.user_entry = ctk.CTkEntry(self, textvariable=self.user_var)
-        self.user_entry.pack()
+        ctk.CTkLabel(self, text="RG do Operador (apenas números):").pack(pady=(30, 5))
+        self.operator_entry = ctk.CTkEntry(self, textvariable=self.operator_id_var)
+        self.operator_entry.pack()
 
-        ctk.CTkLabel(self, text="Senha Oracle:").pack(pady=(15, 5))
+        ctk.CTkLabel(self, text="Senha:").pack(pady=(15, 5))
         self.pass_entry = ctk.CTkEntry(self, textvariable=self.pass_var, show="*")
         self.pass_entry.pack()
 
@@ -103,24 +103,36 @@ class LoginScreen(ctk.CTk):
         self.bind("<Return>", lambda event: self.try_connect())  # Pressionar Enter para conectar
 
     def try_connect(self):
-        global ORACLE_USER, ORACLE_PASSWORD, ORACLE_DSN
+        global ORACLE_USER, ORACLE_PASSWORD, ORACLE_DSN, OPERATOR_ID
 
-        ORACLE_USER = self.user_var.get()
+        raw_operator_id = self.operator_id_var.get().strip()
         ORACLE_PASSWORD = self.pass_var.get()
-        
-        # Configure seu DSN corretamente aqui
+
+        # Validação: só números
+        if not raw_operator_id.isdigit():
+            messagebox.showerror("Entrada Inválida", "Digite apenas números na matrícula.")
+            return
+
+        OPERATOR_ID = int(raw_operator_id)
+        ORACLE_USER = f"rj0{raw_operator_id}"  # Ex: "rj0356789"
+
+        # DSN Oracle
         ORACLE_DSN = (
-    "(DESCRIPTION=(ADDRESS_LIST= (LOAD_BALANCE=on)"
-    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.225)(PORT=1521))"
-    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.226)(PORT=1521))"
-    "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.227)(PORT=1521)))"
-    "(CONNECT_DATA=(SERVICE_NAME= dic)(SERVER = DEDICATED)))"
-) # Ex: "localhost/orclpdb1"
+            "(DESCRIPTION=(ADDRESS_LIST=(LOAD_BALANCE=on)"
+            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.225)(PORT=1521))"
+            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.226)(PORT=1521))"
+            "(ADDRESS=(PROTOCOL=tcp)(HOST=10.200.96.227)(PORT=1521)))"
+            "(CONNECT_DATA=(SERVICE_NAME=dic)(SERVER=DEDICATED)))"
+        )
 
         try:
             conn = oracledb.connect(user=ORACLE_USER, password=ORACLE_PASSWORD, dsn=ORACLE_DSN)
             conn.close()
             self.destroy()
+
+            # ✅ Para debug (remova em produção, se quiser)
+            print(f"Conectado como {ORACLE_USER}, operador ID: {OPERATOR_ID}")
+
             app = App()
             app.mainloop()
         except oracledb.DatabaseError as e:
